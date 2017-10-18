@@ -8,17 +8,34 @@ var MapWrapper = function (container, coords, zoom) {
   this.bounceMarkers = this.bounceMarkers.bind(this);
   this.travelToTexas = this.travelToTexas.bind(this);
   this.whereAmI = this.whereAmI.bind(this);
+  this.zoom = this.zoom.bind(this);
+  this.moveMapToCurrentLocation = this.moveMapToCurrentLocation.bind(this);
 }
 
-MapWrapper.prototype.addMarker = function(coords) {
+MapWrapper.prototype.addMarker = function(coords, infoWindowContent) {
   var marker = new google.maps.Marker({
     position: coords,
     map: this.googleMap
   })
-  var window = this.addInfoWindow();
+  if (infoWindowContent){
+    var infoWindow = new google.maps.InfoWindow({
+      content: infoWindowContent
+    })
   marker.addListener("click", function(){
-    window.open(this.mainMap, marker)
-  });
+      infoWindow.open(this.map, this)
+      console.log("This.Map");
+      console.dir(this.map);
+      console.log("This.GoogleMap");
+      console.dir(this.googleMap);
+      console.log("marker/this");
+      console.dir(marker);
+      console.dir(this);
+    })
+  }
+  // var window = this.addInfoWindow();
+  // marker.addListener("click", function(){
+  //   window.open(this.mainMap, marker)
+  // });
   this.markers.push(marker);
 }
 
@@ -40,10 +57,9 @@ MapWrapper.prototype.bounceMarkers = function () {
   })
 };
 
-MapWrapper.prototype.addInfoWindow = function(){
-  var contentString = "Here it is...";
+MapWrapper.prototype.addInfoWindow = function(contentInfo){
   var infoWindow = new google.maps.InfoWindow({
-     content: contentString
+     content: contentInfo
    });
    return infoWindow;
 };
@@ -54,32 +70,24 @@ MapWrapper.prototype.travelToTexas = function () {
   this.googleMap.panTo(coords);
 };
 
-MapWrapper.prototype.whereAmI = function () {
-  var output = document.querySelector("#output");
-  var context = this;
-  if (!navigator.geolocation){
-    output.innerHTML = "<p>Geolocation is not supported by your browser</p>";
-    return;
-  }
 
-  function success(position) {
-    var latitude  = position.coords.latitude;
-    var longitude = position.coords.longitude;
-    // var coords = {lat: latitude, lng: longitude };
-    // context.panTo(coords)
-    output.innerHTML = '<p>Latitude is ' + latitude + '° <br>Longitude is ' + longitude + '°</p>';
+// MapWrapper.prototype.geolocate = function () {
+//   navigator.geolocation.getCurrentPosition(function(position){
+//     var center = ({lat: position.coords.latitude, lng: position.coords.longitude })
+//     this.googleMap.setCenter(center)
+//     this.addMarker(center);
+//   }.bind(this))
+//
+// };
 
-    var img = new Image();
-    img.src = "https://maps.googleapis.com/maps/api/staticmap?center=" + latitude + "," + longitude + "&zoom=18&size=300x300&sensor=false";
+MapWrapper.prototype.zoom = function () {
+  console.log(this);
+  navigator.geolocation.getCurrentPosition(this.moveMapToCurrentLocation);
+};
 
-    output.appendChild(img);
-  }
-
-  function error() {
-    output.innerHTML = "Unable to retrieve your location";
-  }
-  output.innerHTML = "<p>Locating…</p>";
-
-  navigator.geolocation.getCurrentPosition(success, error);
-
+MapWrapper.prototype.moveMapToCurrentLocation = function (position) {
+  console.log(this);
+  var center = ({lat: position.coords.latitude, lng: position.coords.longitude })
+  this.googleMap.setCenter(center)
+  this.addMarker(center);
 };
